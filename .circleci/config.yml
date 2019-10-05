@@ -8,7 +8,9 @@ jobs:
       - restore_cache:
           keys:
           - go-mod-{{ checksum "go.sum" }}
-          - tools-{{ checksum "Makefile" }}
+      - restore_cache:
+          keys:
+            - tools-{{ checksum "Makefile" }}
       - run: make
       - save_cache:
           key: go-mod-{{ checksum "go.sum" }}
