@@ -1,0 +1,24 @@
+run:
+  deadline: 2m
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 10
+  maligned:
+    suggest-new: true
+
+linters:
+  enable-all: true
+  disable:
+    - gochecknoglobals
+    - typecheck
+    - goconst
+    - gofmt
+    - misspell
+    - golint
+    - dupl
+    - whitespace
+    - lll
+    - gosec
