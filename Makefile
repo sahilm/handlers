@@ -9,6 +9,11 @@ lint: tools
 test: tools
 	ginkgo -r -p -keepGoing -randomizeAllSpecs -randomizeSuites -trace -race -progress
 
+.PHONY: cover
+cover: tools
+	mkdir -p coverage
+	gocov test $(BUILD_TAGS) ./... | gocov-html > coverage/index.html
+
 sources = $(shell find . -name '*.go' -not -path './vendor/*')
 .PHONY: goimports
 goimports: tools
