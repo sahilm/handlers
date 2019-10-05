@@ -4,10 +4,10 @@ jobs:
     docker:
       - image: golang:1-buster
     steps:
+      - checkout
       - restore_cache:
           keys:
           - go-mod-v1-{{ checksum "go.sum" }}
-      - checkout
       - run: make
       - save_cache:
           key: go-mod-v1-{{ checksum "go.sum" }}
