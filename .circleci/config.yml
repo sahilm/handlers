@@ -7,9 +7,14 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-          - go-mod-v1-{{ checksum "go.sum" }}
+          - go-mod-{{ checksum "go.sum" }}
+          - tools-{{ checksum "Makefile" }}
       - run: make
       - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
+          key: go-mod-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
+      - save_cache:
+          key: tools-{{ checksum "Makefile" }}
+          paths:
+            - "bin"
