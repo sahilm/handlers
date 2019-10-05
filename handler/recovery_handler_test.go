@@ -8,7 +8,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sahim/handlers/handler"
+	"github.com/sahilm/handlers/handler"
 )
 
 var _ = Describe("RecoveryHandler", func() {
