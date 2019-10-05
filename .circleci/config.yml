@@ -3,7 +3,13 @@ jobs:
   build:
     docker:
       - image: golang:1-buster
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
+      - restore_cache:
+          keys:
+          - go-mod-v1-{{ checksum "go.sum" }}
       - checkout
       - run: make
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
