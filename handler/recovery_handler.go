@@ -27,20 +27,19 @@ func RecoveryHandler(recoveryFunc RecoveryFunc, next http.Handler) http.Handler 
 
 func stackTrace() []Stack {
 	var traces []Stack
-	for skip := 2; ; skip++ {
-		pc, file, lineNumber, ok := runtime.Caller(skip)
-		if !ok {
+	pc := make([]uintptr, 100)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	for {
+		frame, more := frames.Next()
+		traces = append(traces, Stack{
+			frame.File,
+			frame.Line,
+			frame.Func.Name(),
+		})
+		if !more {
 			break
 		}
-		if file[len(file)-1] == 'c' {
-			continue
-		}
-		f := runtime.FuncForPC(pc)
-		traces = append(traces, Stack{
-			file,
-			lineNumber,
-			f.Name(),
-		})
 	}
 	return traces
 }

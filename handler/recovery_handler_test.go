@@ -62,6 +62,8 @@ var _ = Describe("RecoveryHandler", func() {
 		Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 		bytes, err := ioutil.ReadAll(recorder.Body)
 		Expect(err).ToNot(HaveOccurred())
+		_, err = fmt.Fprintln(GinkgoWriter, string(bytes))
+		Expect(err).ToNot(HaveOccurred())
 		Expect(string(bytes)).To(ContainSubstring("runtime.gopanic()"))
 	})
 })
