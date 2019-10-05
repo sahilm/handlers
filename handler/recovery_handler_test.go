@@ -35,10 +35,10 @@ var _ = Describe("RecoveryHandler", func() {
 			panic(panicMessage)
 		})
 
-		recoveryFunc = func(w http.ResponseWriter, req *http.Request, panicMessage interface{}, stackTrace []handler.Stack, id string) {
+		recoveryFunc = func(w http.ResponseWriter, req *http.Request, panicMessage interface{}, stackTrace []handler.Stack) {
 			w.WriteHeader(http.StatusInternalServerError)
 			for _, s := range stackTrace {
-				_, err := fmt.Fprintf(w, "[%s] %s:%d %s()\n", id, s.File, s.LineNumber, s.FuncName)
+				_, err := fmt.Fprintf(w, "%s:%d %s()\n", s.File, s.LineNumber, s.FuncName)
 				Expect(err).ToNot(HaveOccurred())
 			}
 		}

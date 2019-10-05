@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"encoding/hex"
-	"math/rand"
 	"net/http"
 	"runtime"
-	"time"
 )
 
 type Stack struct {
@@ -14,13 +11,13 @@ type Stack struct {
 	FuncName   string
 }
 
-type RecoveryFunc func(w http.ResponseWriter, req *http.Request, panicMessage interface{}, stackTrace []Stack, id string)
+type RecoveryFunc func(w http.ResponseWriter, req *http.Request, panicMessage interface{}, stackTrace []Stack)
 
 func RecoveryHandler(recoveryFunc RecoveryFunc, next http.Handler) http.Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				recoveryFunc(w, r, err, stackTrace(), randomHexEncodedString(7))
+				recoveryFunc(w, r, err, stackTrace())
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -46,11 +43,4 @@ func stackTrace() []Stack {
 		})
 	}
 	return traces
-}
-
-func randomHexEncodedString(length int) string {
-	rand.Seed(time.Now().UnixNano())
-	buff := make([]byte, length)
-	rand.Read(buff)
-	return hex.EncodeToString(buff)
 }
