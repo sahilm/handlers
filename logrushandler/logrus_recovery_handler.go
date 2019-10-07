@@ -11,10 +11,20 @@ import (
 
 type RecoveryHandler struct {
 	Logger *logrus.Entry
+	hrh    handler.RecoveryHandler
 }
 
-func (rh RecoveryHandler) Handler(next http.Handler) http.Handler {
-	return handler.RecoveryHandler(rh.recoveryFunc, next)
+func NewRecoveryHandler(logger *logrus.Entry, next http.Handler) RecoveryHandler {
+	rh := RecoveryHandler{Logger: logger}
+	rh.hrh = handler.RecoveryHandler{
+		OnRecoveryFunc: rh.recoveryFunc,
+		Next:           next,
+	}
+	return rh
+}
+
+func (rh RecoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	rh.hrh.ServeHTTP(w, r)
 }
 
 func (rh RecoveryHandler) recoveryFunc(w http.ResponseWriter, req *http.Request, panicMessage interface{},

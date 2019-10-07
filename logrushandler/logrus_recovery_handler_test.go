@@ -52,10 +52,8 @@ var _ = Describe("LogrusRecoveryHandler", func() {
 	})
 
 	It("should log panics and respond with 500", func() {
-		handler := logrushandler.RecoveryHandler{
-			Logger: logger.WithFields(logrus.Fields{}),
-		}
-		handler.Handler(panickingNextHandler).ServeHTTP(recorder, request)
+		handler := logrushandler.NewRecoveryHandler(logger.WithFields(logrus.Fields{}), panickingNextHandler)
+		handler.ServeHTTP(recorder, request)
 		Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 		Expect(hook.Entries).To(HaveLen(1))
 		Expect(hook.LastEntry().Level).To(Equal(logrus.ErrorLevel))
@@ -63,18 +61,14 @@ var _ = Describe("LogrusRecoveryHandler", func() {
 	})
 
 	It("should log nothing if there are no panics", func() {
-		handler := logrushandler.RecoveryHandler{
-			Logger: logger.WithFields(logrus.Fields{}),
-		}
-		handler.Handler(nextHandler).ServeHTTP(recorder, request)
+		handler := logrushandler.NewRecoveryHandler(logger.WithFields(logrus.Fields{}), nextHandler)
+		handler.ServeHTTP(recorder, request)
 		Expect(hook.Entries).To(HaveLen(0))
 	})
 
 	It("should delegate to next handler", func() {
-		handler := logrushandler.RecoveryHandler{
-			Logger: logger.WithFields(logrus.Fields{}),
-		}
-		handler.Handler(nextHandler).ServeHTTP(recorder, request)
+		handler := logrushandler.NewRecoveryHandler(logger.WithFields(logrus.Fields{}), nextHandler)
+		handler.ServeHTTP(recorder, request)
 		Expect(recorder.Code).To(Equal(http.StatusOK))
 		bytes, err := ioutil.ReadAll(recorder.Body)
 		Expect(err).ToNot(HaveOccurred())

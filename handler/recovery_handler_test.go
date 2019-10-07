@@ -48,7 +48,10 @@ var _ = Describe("RecoveryHandler", func() {
 	})
 
 	It("should delegate to nextHandler", func() {
-		recoveryHandler := handler.RecoveryHandler(recoveryFunc, nextHandler)
+		recoveryHandler := handler.RecoveryHandler{
+			OnRecoveryFunc: recoveryFunc,
+			Next:           nextHandler,
+		}
 		recoveryHandler.ServeHTTP(recorder, request)
 		Expect(recorder.Code).To(Equal(http.StatusOK))
 		bytes, err := ioutil.ReadAll(recorder.Body)
@@ -57,7 +60,10 @@ var _ = Describe("RecoveryHandler", func() {
 	})
 
 	It("should trap panics", func() {
-		recoveryHandler := handler.RecoveryHandler(recoveryFunc, panickingNextHandler)
+		recoveryHandler := handler.RecoveryHandler{
+			OnRecoveryFunc: recoveryFunc,
+			Next:           panickingNextHandler,
+		}
 		recoveryHandler.ServeHTTP(recorder, request)
 		Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 		bytes, err := ioutil.ReadAll(recorder.Body)
@@ -65,5 +71,12 @@ var _ = Describe("RecoveryHandler", func() {
 		_, err = fmt.Fprintln(GinkgoWriter, string(bytes))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(bytes)).To(ContainSubstring("runtime.gopanic()"))
+	})
+
+	It("should not bomb if there is no recoveryFunc", func() {
+		recoveryHandler := handler.RecoveryHandler{
+			Next: panickingNextHandler,
+		}
+		recoveryHandler.ServeHTTP(recorder, request)
 	})
 })

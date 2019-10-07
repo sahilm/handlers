@@ -13,16 +13,20 @@ type Stack struct {
 
 type RecoveryFunc func(w http.ResponseWriter, req *http.Request, panicMessage interface{}, stackTrace []Stack)
 
-func RecoveryHandler(recoveryFunc RecoveryFunc, next http.Handler) http.Handler {
-	h := func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				recoveryFunc(w, r, err, stackTrace())
+type RecoveryHandler struct {
+	OnRecoveryFunc RecoveryFunc
+	Next           http.Handler
+}
+
+func (rh RecoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			if rh.OnRecoveryFunc != nil {
+				rh.OnRecoveryFunc(w, r, err, stackTrace())
 			}
-		}()
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(h)
+		}
+	}()
+	rh.Next.ServeHTTP(w, r)
 }
 
 func stackTrace() []Stack {
