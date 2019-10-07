@@ -43,7 +43,11 @@ func (rh RecoveryHandler) recoveryFunc(w http.ResponseWriter, req *http.Request,
 		}
 	}
 
-	rh.Logger.WithFields(logrus.Fields{
+	logEntry := rh.Logger.WithFields(logrus.Fields{
 		"panic": panicMessage,
-	}).Error(sb.String())
+	})
+	if requestID := req.Header.Get(handler.RequestIDHeader); requestID != "" {
+		logEntry = logEntry.WithField(handler.RequestIDLogField, requestID)
+	}
+	logEntry.Error(sb.String())
 }

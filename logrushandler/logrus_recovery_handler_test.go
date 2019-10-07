@@ -10,6 +10,7 @@ import (
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sahilm/handlers/handler"
 	"github.com/sahilm/handlers/logrushandler"
 	"github.com/sirupsen/logrus"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
@@ -73,5 +74,16 @@ var _ = Describe("LogrusRecoveryHandler", func() {
 		bytes, err := ioutil.ReadAll(recorder.Body)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(bytes).To(Equal([]byte(responseString)))
+	})
+
+	When("request ID header is provided", func() {
+		It("should add a logger field to the panic trace", func() {
+			h := logrushandler.NewRecoveryHandler(logger.WithFields(logrus.Fields{}), panickingNextHandler)
+			request.Header.Set(handler.RequestIDHeader, "foo")
+			h.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			Expect(hook.Entries).To(HaveLen(1))
+			Expect(hook.LastEntry().Data[handler.RequestIDLogField]).To(Equal("foo"))
+		})
 	})
 })
