@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	"github.com/sahilm/handlers/handler"
 	"github.com/sahilm/handlers/logrushandler"
 	"github.com/sirupsen/logrus"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
@@ -70,12 +71,12 @@ var _ = Describe("RequestsHandler", func() {
 
 	It("should log request IDs if present", func() {
 		loggerEntry := logger.WithFields(logrus.Fields{})
-		handler := logrushandler.NewRequestsHandler(loggerEntry, nextHandler, "", nil)
+		h := logrushandler.NewRequestsHandler(loggerEntry, nextHandler, "", nil)
 		request.Header.Add("X-Request-Id", "abcd")
-		handler.ServeHTTP(recorder, request)
+		h.ServeHTTP(recorder, request)
 
 		Expect(hook.Entries).To(HaveLen(1))
-		Expect(hook.LastEntry().Data["request-id"]).To(Equal("abcd"))
+		Expect(hook.LastEntry().Data[handler.RequestIDLogField]).To(Equal("abcd"))
 	})
 
 	When("request logger ctx key is provided", func() {
@@ -85,7 +86,7 @@ var _ = Describe("RequestsHandler", func() {
 				_, err := fmt.Fprint(w, "foo")
 				Expect(err).ToNot(HaveOccurred())
 				requestLogger := r.Context().Value("logger").(*logrus.Entry)
-				Expect(requestLogger.Data["request-id"]).To(Equal("abcd"))
+				Expect(requestLogger.Data[handler.RequestIDLogField]).To(Equal("abcd"))
 
 			})
 			loggerEntry := logger.WithFields(logrus.Fields{})

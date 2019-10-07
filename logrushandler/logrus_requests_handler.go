@@ -29,7 +29,7 @@ func (rh RequestsHandler) onRequestStart(r *http.Request, metadata handler.Reque
 	}
 	logEntry := rh.Logger.WithField("", "")
 	if requestID := r.Header.Get("X-Request-Id"); requestID != "" {
-		logEntry = rh.Logger.WithField("request-id", requestID)
+		logEntry = rh.Logger.WithField(handler.RequestIDLogField, requestID)
 	}
 	ctx := context.WithValue(r.Context(), rh.RequestLoggerCtxKey, logEntry)
 	*r = *r.Clone(ctx)
@@ -49,7 +49,7 @@ func (rh RequestsHandler) onRequestEnd(w http.ResponseWriter, r *http.Request, m
 	}
 	entry := rh.LogEntry.WithFields(fields)
 	if requestID := r.Header.Get("X-Request-Id"); requestID != "" {
-		entry = entry.WithField("request-id", requestID)
+		entry = entry.WithField(handler.RequestIDLogField, requestID)
 	}
 	entry.Info(r.Method, " ", r.RequestURI)
 }
