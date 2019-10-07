@@ -11,6 +11,7 @@ type RequestMetadata struct {
 	EndTimestamp   time.Time
 	RemoteAddr     string
 	ExecutionTime  time.Duration
+	Status         int
 }
 
 type RequestStartFunc func(r *http.Request, metadata RequestMetadata)
@@ -24,6 +25,11 @@ type RequestsHandler struct {
 	OnRequestEndFunc   RequestEndFunc
 	Next               http.Handler
 	clock              clock
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
 }
 
 func NewRequestsHandler(requestStartFunc RequestStartFunc, requestEndFunc RequestEndFunc, next http.Handler) RequestsHandler {
@@ -45,11 +51,13 @@ func (rh RequestsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	rh.OnRequestStartFunc(r, metadata)
 
-	rh.Next.ServeHTTP(w, r)
+	lw := &loggingResponseWriter{w, http.StatusOK}
+	rh.Next.ServeHTTP(lw, r)
 
 	end := rh.clock()
 	metadata.EndTimestamp = end
 	metadata.ExecutionTime = end.Sub(start)
+	metadata.Status = lw.statusCode
 	rh.OnRequestEndFunc(w, r, metadata)
 }
 
@@ -62,4 +70,9 @@ func remoteAddr(r *http.Request) string {
 		remoteAddr = s
 	}
 	return remoteAddr
+}
+
+func (lw *loggingResponseWriter) WriteHeader(code int) {
+	lw.statusCode = code
+	lw.ResponseWriter.WriteHeader(code)
 }

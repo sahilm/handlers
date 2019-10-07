@@ -25,6 +25,7 @@ var _ = Describe("RequestsHandler", func() {
 	BeforeEach(func() {
 		responseString = "foo"
 		nextHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusFound)
 			_, err := fmt.Fprint(w, responseString)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -60,6 +61,7 @@ var _ = Describe("RequestsHandler", func() {
 				"EndTimestamp":   Equal(times[1]),
 				"RemoteAddr":     Equal("127.0.0.1"),
 				"ExecutionTime":  Equal(100 * time.Millisecond),
+				"Status":         Equal(http.StatusFound),
 			}))
 		}
 
@@ -86,7 +88,7 @@ var _ = Describe("RequestsHandler", func() {
 		}
 		request := httptest.NewRequest("GET", "/test", nil)
 		handler.ServeHTTP(recorder, request)
-		Expect(recorder.Code).To(Equal(http.StatusOK))
+		Expect(recorder.Code).To(Equal(http.StatusFound))
 		bytes, err := ioutil.ReadAll(recorder.Body)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(bytes).To(Equal([]byte(responseString)))
