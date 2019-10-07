@@ -26,6 +26,15 @@ type RequestsHandler struct {
 	clock              clock
 }
 
+func NewRequestsHandler(requestStartFunc RequestStartFunc, requestEndFunc RequestEndFunc, next http.Handler) RequestsHandler {
+	return RequestsHandler{
+		OnRequestStartFunc: requestStartFunc,
+		OnRequestEndFunc:   requestEndFunc,
+		Next:               next,
+		clock:              time.Now,
+	}
+}
+
 func (rh RequestsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := rh.clock()
 
