@@ -43,7 +43,7 @@ var _ = Describe("RequestsHandler", func() {
 
 	It("should log requests and delegate to the next handler", func() {
 		loggerEntry := logger.WithFields(logrus.Fields{})
-		handler := logrushandler.NewRequestsHandler(loggerEntry, nextHandler)
+		handler := logrushandler.NewRequestsHandler(loggerEntry, nextHandler, "", nil)
 		handler.ServeHTTP(recorder, request)
 
 		Expect(hook.Entries).To(HaveLen(1))
@@ -70,11 +70,31 @@ var _ = Describe("RequestsHandler", func() {
 
 	It("should log request IDs if present", func() {
 		loggerEntry := logger.WithFields(logrus.Fields{})
-		handler := logrushandler.NewRequestsHandler(loggerEntry, nextHandler)
+		handler := logrushandler.NewRequestsHandler(loggerEntry, nextHandler, "", nil)
 		request.Header.Add("X-Request-Id", "abcd")
 		handler.ServeHTTP(recorder, request)
 
 		Expect(hook.Entries).To(HaveLen(1))
 		Expect(hook.LastEntry().Data["request-id"]).To(Equal("abcd"))
+	})
+
+	When("request logger ctx key is provided", func() {
+		It("should set a logger with a request id in the request context", func() {
+			h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, err := fmt.Fprint(w, "foo")
+				Expect(err).ToNot(HaveOccurred())
+				requestLogger := r.Context().Value("logger").(*logrus.Entry)
+				Expect(requestLogger.Data["request-id"]).To(Equal("abcd"))
+
+			})
+			loggerEntry := logger.WithFields(logrus.Fields{})
+			handler := logrushandler.NewRequestsHandler(loggerEntry, h, "logger", logger)
+			request.Header.Add("X-Request-Id", "abcd")
+			handler.ServeHTTP(recorder, request)
+			bytes, err := ioutil.ReadAll(recorder.Body)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(bytes).To(Equal([]byte("foo")))
+		})
 	})
 })

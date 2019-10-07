@@ -1,6 +1,7 @@
 package logrushandler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/sahilm/handlers/handler"
@@ -10,17 +11,28 @@ import (
 const ISO8601Format = "2006-01-02T15:04:05Z0700"
 
 type RequestsHandler struct {
-	Logger *logrus.Entry
-	hrh    handler.RequestsHandler
+	LogEntry            *logrus.Entry
+	Logger              *logrus.Logger
+	RequestLoggerCtxKey string
+	hrh                 handler.RequestsHandler
 }
 
-func NewRequestsHandler(logger *logrus.Entry, next http.Handler) RequestsHandler {
-	rh := RequestsHandler{Logger: logger}
+func NewRequestsHandler(logEntry *logrus.Entry, next http.Handler, requestLoggerCtxKey string, logger *logrus.Logger) RequestsHandler {
+	rh := RequestsHandler{LogEntry: logEntry, RequestLoggerCtxKey: requestLoggerCtxKey, Logger: logger}
 	rh.hrh = handler.NewRequestsHandler(rh.onRequestStart, rh.onRequestEnd, next)
 	return rh
 }
 
 func (rh RequestsHandler) onRequestStart(r *http.Request, metadata handler.RequestMetadata) {
+	if rh.RequestLoggerCtxKey == "" {
+		return
+	}
+	logEntry := rh.Logger.WithField("", "")
+	if requestID := r.Header.Get("X-Request-Id"); requestID != "" {
+		logEntry = rh.Logger.WithField("request-id", requestID)
+	}
+	ctx := context.WithValue(r.Context(), rh.RequestLoggerCtxKey, logEntry)
+	*r = *r.Clone(ctx)
 }
 
 func (rh RequestsHandler) onRequestEnd(w http.ResponseWriter, r *http.Request, metadata handler.RequestMetadata) {
@@ -35,7 +47,7 @@ func (rh RequestsHandler) onRequestEnd(w http.ResponseWriter, r *http.Request, m
 		"userAgent":      r.UserAgent(),
 		"method":         r.Method,
 	}
-	entry := rh.Logger.WithFields(fields)
+	entry := rh.LogEntry.WithFields(fields)
 	if requestID := r.Header.Get("X-Request-Id"); requestID != "" {
 		entry = entry.WithField("request-id", requestID)
 	}
