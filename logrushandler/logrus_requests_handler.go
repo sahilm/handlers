@@ -27,7 +27,8 @@ func (rh RequestsHandler) onRequestStart(r *http.Request, metadata handler.Reque
 	if rh.RequestLoggerCtxKey == "" {
 		return
 	}
-	logEntry := rh.Logger.WithField("", "")
+
+	logEntry := logrus.NewEntry(rh.Logger)
 	if requestID := r.Header.Get("X-Request-Id"); requestID != "" {
 		logEntry = rh.Logger.WithField(handler.RequestIDLogField, requestID)
 	}
